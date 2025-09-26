@@ -12,7 +12,7 @@ const Home = () => {
           alt="Quiz Icon"
           className="w-32 h-32 mx-auto mb-4"
         />
-        <h1 className="text-3xl font-bold mb-4 text-orange-500">Mega-Eth Rtivia</h1>
+        <h1 className="text-3xl font-bold mb-4 text-orange-500">Mega-Eth Trivia App</h1>
         <button
           onClick={() => navigate("/quiz")}
           className="bg-orange-600 hover:bg-orange-500 transition duration-300 text-white px-6 py-2 rounded-md text-lg font-medium"
