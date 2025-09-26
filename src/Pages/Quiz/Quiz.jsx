@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 
 const Quiz = () => {
   const [userName, setUserName] = useState('');
@@ -6,6 +6,7 @@ const Quiz = () => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [score, setScore] = useState(0);
   const [showResult, setShowResult] = useState(false);
+  const [timeLeft, setTimeLeft] = useState(15);
 
   const questions = [
     {
@@ -98,6 +99,7 @@ const Quiz = () => {
   const handleStart = () => {
     if (userName.trim() !== '') {
       setStartQuiz(true);
+      setTimeLeft(15);
     }
   };
 
@@ -105,14 +107,37 @@ const Quiz = () => {
     if (selected === questions[currentIndex].answer) {
       setScore(score + 1);
     }
+    handleNextQuestion();
+  };
 
+  const handleNextQuestion = () => {
     const nextIndex = currentIndex + 1;
     if (nextIndex < questions.length) {
       setCurrentIndex(nextIndex);
+      setTimeLeft(15); // reset timer
     } else {
       setShowResult(true);
     }
   };
+
+  // Timer effect
+  useEffect(() => {
+    if (!startQuiz || showResult) return;
+
+    if (timeLeft === 0) {
+      handleNextQuestion();
+      return;
+    }
+
+    const timer = setTimeout(() => {
+      setTimeLeft(timeLeft - 1);
+    }, 1000);
+
+    return () => clearTimeout(timer);
+  }, [timeLeft, startQuiz, showResult]);
+
+  // Progress percentage
+  const progressPercent = (timeLeft / 15) * 100;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-black via-gray-900 to-slate-800 text-white flex items-center justify-center p-4">
@@ -154,6 +179,18 @@ const Quiz = () => {
               Question {currentIndex + 1} of {questions.length}
             </h2>
             <p className="text-lg mb-2">{questions[currentIndex].question}</p>
+
+            {/* Timer + Progress bar */}
+            <div className="mb-4">
+              <p className="text-red-400 font-bold">⏳ Time Left: {timeLeft}s</p>
+              <div className="w-full h-2 bg-gray-700 rounded">
+                <div
+                  className="h-2 bg-orange-500 rounded transition-all duration-1000"
+                  style={{ width: `${progressPercent}%` }}
+                ></div>
+              </div>
+            </div>
+
             <div className="grid gap-3">
               {questions[currentIndex].options.map((opt, index) => (
                 <button
