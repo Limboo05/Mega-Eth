@@ -1,19 +1,102 @@
-import React, { useState } from "react";
-import { getRandomQuestions } from "../../data/questions"; // ✅ fixed import
+import React, { useState } from 'react';
 
 const Quiz = () => {
-  const [userName, setUserName] = useState("");
+  const [userName, setUserName] = useState('');
   const [startQuiz, setStartQuiz] = useState(false);
-  const [questions, setQuestions] = useState([]); // store shuffled questions
   const [currentIndex, setCurrentIndex] = useState(0);
   const [score, setScore] = useState(0);
   const [showResult, setShowResult] = useState(false);
 
+  const questions = [
+    {
+      question: "What does GTE stand for?",
+      options: [
+        "Global Token Exchange",
+        "General Trading Engine",
+        "Global Trading Exchange",
+        "Generic Token Ecosystem"
+      ],
+      answer: "Global Token Exchange"
+    },
+    {
+      question: "Which ecosystem powers GTE?",
+      options: ["Solana", "Arbitrum", "MegaETH", "Ethereum"],
+      answer: "MegaETH"
+    },
+    {
+      question: "GTE is primarily:",
+      options: [
+        "A Layer 1 blockchain",
+        "A wallet app",
+        "A trading platform built on MegaETH",
+        "A staking protocol"
+      ],
+      answer: "A trading platform built on MegaETH"
+    },
+    {
+      question: "What kind of engine does GTE use?",
+      options: [
+        "Automated Market Maker (AMM) only",
+        "Central Limit Order Book (CLOB)",
+        "Randomized auction model",
+        "DEX-Powered Swapping Engine"
+      ],
+      answer: "Central Limit Order Book (CLOB)"
+    },
+    {
+      question: "What’s GTE’s mission?",
+      options: [
+        "To build a meme coin",
+        "To bring CEX-level performance fully on-chain",
+        "To replace Ethereum",
+        "To focus on NFTs only"
+      ],
+      answer: "To bring CEX-level performance fully on-chain"
+    },
+    {
+      question: "How many orders per second can GTE process?",
+      options: ["1,000", "10,000", "100,000", "1,000,000"],
+      answer: "100,000"
+    },
+    {
+      question: "What is the approximate latency on GTE?",
+      options: ["10 seconds", "1 second", "1 millisecond", "100 milliseconds"],
+      answer: "1 millisecond"
+    },
+    {
+      question: "What is Takeoff in GTE?",
+      options: [
+        "A gas fee calculator",
+        "A bonding-curve token launchpad",
+        "An order book for deep liquidity",
+        "An NFT minter"
+      ],
+      answer: "A bonding-curve token launchpad"
+    },
+    {
+      question: "Who holds user funds on GTE?",
+      options: [
+        "Portfolio",
+        "Users themselves",
+        "Admin-controlled security contracts",
+        "Flow Traders"
+      ],
+      answer: "Users themselves"
+    },
+    {
+      question: "Which statement is true about GTE?",
+      options: [
+        "GTE can freeze your funds at will",
+        "You always control your funds on GTE",
+        "GTE requires admin approval for trades",
+        "Funds are bridged to CEX custody for security purposes"
+      ],
+      answer: "You always control your funds on GTE"
+    }
+  ];
+
   const handleStart = () => {
-    if (userName.trim() !== "") {
-      // Get 10 random questions (options also shuffled)
-      const randomQuestions = getRandomQuestions(10);
-      setQuestions(randomQuestions);
+    if (userName.trim() !== '') {
       setStartQuiz(true);
     }
   };
@@ -55,13 +138,12 @@ const Quiz = () => {
           <div className="text-center space-y-4">
             <h2 className="text-3xl font-bold text-orange-500">Quiz Finished!</h2>
             <p className="text-lg">
-              {userName}, your score is <strong>{score}</strong> out of{" "}
-              {questions.length}
+              {userName}, your score is <strong>{score}</strong> out of {questions.length}
             </p>
             <p className="text-xl">
-              {score === questions.length
+              {score === 10
                 ? "🎉 Excellent Job!"
-                : score >= questions.length * 0.7
+                : score >= 7
                 ? "👍 Good Job!"
                 : "😐 Try Again!"}
             </p>
