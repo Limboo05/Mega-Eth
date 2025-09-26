@@ -1,15 +1,19 @@
-import React, { useState } from 'react';
-import questions from '../data/questions'; // ✅ Import the 50 GTE questions
+import React, { useState } from "react";
+import { getRandomQuestions } from "../../data/questions"; // ✅ fixed import
 
 const Quiz = () => {
-  const [userName, setUserName] = useState('');
+  const [userName, setUserName] = useState("");
   const [startQuiz, setStartQuiz] = useState(false);
+  const [questions, setQuestions] = useState([]); // store shuffled questions
   const [currentIndex, setCurrentIndex] = useState(0);
   const [score, setScore] = useState(0);
   const [showResult, setShowResult] = useState(false);
 
   const handleStart = () => {
-    if (userName.trim() !== '') {
+    if (userName.trim() !== "") {
+      // Get 10 random questions (options also shuffled)
+      const randomQuestions = getRandomQuestions(10);
+      setQuestions(randomQuestions);
       setStartQuiz(true);
     }
   };
@@ -50,11 +54,16 @@ const Quiz = () => {
         ) : showResult ? (
           <div className="text-center space-y-4">
             <h2 className="text-3xl font-bold text-orange-500">Quiz Finished!</h2>
-            <p className="text-lg">{userName}, your score is <strong>{score}</strong> out of {questions.length}</p>
+            <p className="text-lg">
+              {userName}, your score is <strong>{score}</strong> out of{" "}
+              {questions.length}
+            </p>
             <p className="text-xl">
-              {score === questions.length ? "🎉 Perfect Score!" :
-               score >= Math.floor(questions.length * 0.7) ? "👍 Great Job!" :
-               "😐 Keep Practicing!"}
+              {score === questions.length
+                ? "🎉 Excellent Job!"
+                : score >= questions.length * 0.7
+                ? "👍 Good Job!"
+                : "😐 Try Again!"}
             </p>
           </div>
         ) : (
