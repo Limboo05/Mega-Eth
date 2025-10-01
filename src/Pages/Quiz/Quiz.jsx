@@ -1,11 +1,16 @@
 import React, { useState, useEffect } from 'react';
 
+const API_BASE = "https://megaeth-app.onrender.com/api";
+
 const Quiz = () => {
-  const [userName, setUserName] = useState('');
+  const [userName, setUserName] = useState(localStorage.getItem("username") || "");
+  const [userId, setUserId] = useState(localStorage.getItem("userId") || null);
   const [startQuiz, setStartQuiz] = useState(false);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [score, setScore] = useState(0);
   const [showResult, setShowResult] = useState(false);
+  const [attemptsLeft, setAttemptsLeft] = useState(null);
+  const [leaderboard, setLeaderboard] = useState([]);
   const [timeLeft, setTimeLeft] = useState(15);
 
   const questions = [
@@ -96,8 +101,28 @@ const Quiz = () => {
     }
   ];
 
+  // Fetch attempts left on mount
+  useEffect(() => {
+    if (userId) {
+      fetch(`${API_BASE}/quiz/attempts/${userId}`)
+        .then(res => res.json())
+        .then(data => setAttemptsLeft(data.attempts_left))
+        .catch(err => console.error("Error fetching attempts:", err));
+    }
+  }, [userId]);
+
+  // Timer effect
+  useEffect(() => {
+    if (startQuiz && !showResult && timeLeft > 0) {
+      const timer = setTimeout(() => setTimeLeft(timeLeft - 1), 1000);
+      return () => clearTimeout(timer);
+    } else if (timeLeft === 0) {
+      handleNextQuestion();
+    }
+  }, [startQuiz, showResult, timeLeft]);
+
   const handleStart = () => {
-    if (userName.trim() !== '') {
+    if (userName.trim() !== '' && attemptsLeft > 0) {
       setStartQuiz(true);
       setTimeLeft(15);
     }
@@ -114,30 +139,40 @@ const Quiz = () => {
     const nextIndex = currentIndex + 1;
     if (nextIndex < questions.length) {
       setCurrentIndex(nextIndex);
-      setTimeLeft(15); // reset timer
+      setTimeLeft(15);
     } else {
-      setShowResult(true);
+      handleQuizEnd();
     }
   };
 
-  // Timer effect
-  useEffect(() => {
-    if (!startQuiz || showResult) return;
+  const handleQuizEnd = async () => {
+    setShowResult(true);
 
-    if (timeLeft === 0) {
-      handleNextQuestion();
-      return;
+    if (userId) {
+      try {
+        const res = await fetch(`${API_BASE}/quiz/submit`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ user_id: userId, score })
+        });
+
+        if (res.ok) {
+          const data = await res.json();
+          setAttemptsLeft(data.attempts_left);
+
+          // fetch leaderboard after submitting score
+          fetch(`${API_BASE}/quiz/leaderboard`)
+            .then(res => res.json())
+            .then(lb => setLeaderboard(lb));
+        } else {
+          const err = await res.json();
+          console.error("Submit error:", err.detail);
+        }
+      } catch (err) {
+        console.error("Error submitting score:", err);
+      }
     }
-
-    const timer = setTimeout(() => {
-      setTimeLeft(timeLeft - 1);
-    }, 1000);
-
-    return () => clearTimeout(timer);
-  }, [timeLeft, startQuiz, showResult]);
-
-  // Progress percentage
-  const progressPercent = (timeLeft / 15) * 100;
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-black via-gray-900 to-slate-800 text-white flex items-center justify-center p-4">
@@ -149,15 +184,24 @@ const Quiz = () => {
               type="text"
               placeholder="Enter your name"
               value={userName}
-              onChange={(e) => setUserName(e.target.value)}
+              onChange={(e) => {
+                setUserName(e.target.value);
+                localStorage.setItem("username", e.target.value);
+              }}
               className="w-full px-4 py-2 rounded-md bg-gray-800 text-white border border-gray-600 focus:outline-none focus:ring-2 focus:ring-orange-500"
             />
             <button
               onClick={handleStart}
-              className="w-full bg-orange-600 hover:bg-orange-500 transition duration-300 text-white py-2 rounded-md text-lg font-medium"
+              disabled={attemptsLeft === 0}
+              className={`w-full ${
+                attemptsLeft === 0 ? "bg-gray-600 cursor-not-allowed" : "bg-orange-600 hover:bg-orange-500"
+              } transition duration-300 text-white py-2 rounded-md text-lg font-medium`}
             >
-              Start Quiz
+              {attemptsLeft === 0 ? "No Attempts Left Today" : "Start Quiz"}
             </button>
+            {attemptsLeft !== null && (
+              <p className="text-sm text-gray-400">Attempts left today: {attemptsLeft}</p>
+            )}
           </div>
         ) : showResult ? (
           <div className="text-center space-y-4">
@@ -165,13 +209,18 @@ const Quiz = () => {
             <p className="text-lg">
               {userName}, your score is <strong>{score}</strong> out of {questions.length}
             </p>
-            <p className="text-xl">
-              {score === 10
-                ? "🎉 Excellent Job!"
-                : score >= 7
-                ? "👍 Good Job!"
-                : "😐 Try Again!"}
+            <p className="text-sm text-gray-400">
+              You have {attemptsLeft} attempts left today.
             </p>
+            <h3 className="text-2xl font-semibold mt-6 text-orange-400">🏆 Leaderboard (Top 10)</h3>
+            <ul className="mt-4 space-y-2">
+              {leaderboard.map((entry, idx) => (
+                <li key={idx} className="flex justify-between bg-gray-800 px-4 py-2 rounded-md">
+                  <span>User {entry.user_id}</span>
+                  <span className="font-bold">{entry.best_score}</span>
+                </li>
+              ))}
+            </ul>
           </div>
         ) : (
           <div className="space-y-4">
@@ -180,15 +229,15 @@ const Quiz = () => {
             </h2>
             <p className="text-lg mb-2">{questions[currentIndex].question}</p>
 
-            {/* Timer + Progress bar */}
+            {/* Timer + progress bar */}
             <div className="mb-4">
-              <p className="text-red-400 font-bold">⏳ Time Left: {timeLeft}s</p>
-              <div className="w-full h-2 bg-gray-700 rounded">
+              <div className="h-2 bg-gray-700 rounded">
                 <div
-                  className="h-2 bg-orange-500 rounded transition-all duration-1000"
-                  style={{ width: `${progressPercent}%` }}
-                ></div>
+                  className="h-2 bg-orange-500 rounded"
+                  style={{ width: `${(timeLeft / 15) * 100}%`, transition: "width 1s linear" }}
+                />
               </div>
+              <p className="text-sm text-gray-400 mt-1">{timeLeft} seconds left</p>
             </div>
 
             <div className="grid gap-3">
