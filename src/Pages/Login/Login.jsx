@@ -1,48 +1,30 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 
-const API_BASE = "https://mega-eth.onrender.com";
-
 const Login = () => {
   const [loginEmail, setLoginEmail] = useState("");
   const [loginPass, setLoginPass] = useState("");
-  const [loading, setLoading] = useState(false);
-  const navigate = useNavigate();
+  const navigate = useNavigate()
 
-  const handleLogin = async (e) => {
+
+  const handleLogin = (e) => {
     e.preventDefault();
 
-    if (!loginEmail || !loginPass) {
-      alert("Please enter email and password.");
-      return;
+    const savedUser = JSON.parse(localStorage.getItem("quizUser"));
+
+    if (
+      savedUser &&
+      savedUser.email === loginEmail &&
+      savedUser.password === loginPass
+    ) {
+      alert(`Welcome back, ${savedUser.name}!`);
+      navigate('/quiz')
+    } else {
+      alert("Invalid email or password.");
     }
 
-    setLoading(true);
-    try {
-      const res = await fetch(`${API_BASE}/auth/login`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: loginEmail, password: loginPass }),
-      });
-
-      if (res.ok) {
-        const data = await res.json();
-        // ✅ Store JWT + user info
-        localStorage.setItem("token", data.access_token);
-        localStorage.setItem("userId", data.user.id);
-        localStorage.setItem("username", data.user.username);
-
-        alert(`Welcome back, ${data.user.username}!`);
-        navigate("/quiz");
-      } else {
-        const err = await res.json();
-        alert(err.detail || "Login failed.");
-      }
-    } catch (err) {
-      console.error("Login error:", err);
-      alert("Something went wrong. Try again.");
-    }
-    setLoading(false);
+    setLoginEmail("");
+    setLoginPass("");
   };
 
   return (
@@ -50,11 +32,9 @@ const Login = () => {
       <div className="w-full max-w-md bg-gray-900 p-8 rounded-2xl shadow-lg">
         <h2 className="text-3xl font-semibold text-center mb-6">Login</h2>
 
-        <form onSubmit={handleLogin} className="space-y-5">
+        <form className="space-y-5">
           <div>
-            <label className="block text-sm mb-1" htmlFor="email">
-              Email
-            </label>
+            <label className="block text-sm mb-1" htmlFor="email">Email</label>
             <input
               id="email"
               type="email"
@@ -66,9 +46,7 @@ const Login = () => {
           </div>
 
           <div>
-            <label className="block text-sm mb-1" htmlFor="password">
-              Password
-            </label>
+            <label className="block text-sm mb-1" htmlFor="password">Password</label>
             <input
               id="password"
               type="password"
@@ -81,22 +59,20 @@ const Login = () => {
 
           <button
             type="submit"
-            disabled={loading}
             className="w-full bg-orange-600 hover:bg-orange-500 transition duration-300 text-white py-2 rounded-md text-lg font-medium"
+            onClick={handleLogin}
           >
-            {loading ? "Logging in..." : "Login"}
+            Login
           </button>
         </form>
 
         <p className="text-sm text-center mt-4 text-gray-400">
           Don't have an account?{" "}
-          <Link to="/signup" className="text-orange-400 hover:underline">
-            Signup here
-          </Link>
+          <Link to="/signup" className="text-orange-400 hover:underline">Signup here</Link>
         </p>
       </div>
     </div>
   );
 };
 
-export default Login;
+export default Login
