@@ -7,7 +7,7 @@ app = FastAPI(title="MegaETH Backend", version="1.0.0")
 # ✅ Allow frontend (Vercel) to talk to backend
 origins = [
     "http://localhost:5173",  # Vite dev server
-    "https://your-frontend.vercel.app"  # replace with actual Vercel domain
+    "https://mega-eth-blond.vercel.app/"  # replace with actual Vercel domain
 ]
 
 app.add_middleware(
