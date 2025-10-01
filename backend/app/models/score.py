@@ -1,11 +1,14 @@
-from sqlalchemy import Column, Integer, String, ForeignKey
+from sqlalchemy import Column, Integer, ForeignKey, DateTime, func
 from sqlalchemy.orm import relationship
 from app.database import Base
 
-class Quiz(Base):
-    __tablename__ = "quizzes"
+class Score(Base):
+    __tablename__ = "scores"
 
     id = Column(Integer, primary_key=True, index=True)
-    question = Column(String, nullable=False)
-    answer = Column(String, nullable=False)
-    options = Column(String, nullable=False)  # JSON string of options
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"))
+    score = Column(Integer, nullable=False)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+    # Relationship back to User
+    user = relationship("User", back_populates="scores")
