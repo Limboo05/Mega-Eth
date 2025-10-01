@@ -1,17 +1,13 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 
-const API_BASE = "https://mega-eth.onrender.com";
-
 const Signup = () => {
   const [userName, setUserName] = useState("");
   const [userEmail, setUserEmail] = useState("");
   const [userPass, setUserPass] = useState("");
-  const [loading, setLoading] = useState(false);
-
-  const navigate = useNavigate();
-
-  const handleSubmit = async (e) => {
+ 
+  const navigate = useNavigate()
+  const handleSubmit = (e) => {
     e.preventDefault();
 
     if (!userName || !userEmail || !userPass) {
@@ -19,30 +15,20 @@ const Signup = () => {
       return;
     }
 
-    setLoading(true);
-    try {
-      const res = await fetch(`${API_BASE}/auth/signup`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          username: userName,
-          email: userEmail,
-          password: userPass,
-        }),
-      });
+    const userData = {
+      name: userName,
+      email: userEmail,
+      password: userPass,
+    };
 
-      if (res.ok) {
-        alert("Signup successful! Please log in.");
-        navigate("/login");
-      } else {
-        const err = await res.json();
-        alert(err.detail || "Signup failed.");
-      }
-    } catch (err) {
-      console.error("Signup error:", err);
-      alert("Something went wrong. Try again.");
-    }
-    setLoading(false);
+    localStorage.setItem("quizUser", JSON.stringify(userData));
+
+    alert("Signup successful!");
+    navigate('/login')
+
+    setUserName("");
+    setUserEmail("");
+    setUserPass("");
   };
 
   return (
@@ -55,7 +41,7 @@ const Signup = () => {
         <form onSubmit={handleSubmit} className="space-y-5">
           <div>
             <label className="block text-sm mb-1" htmlFor="username">
-              X-Username
+               X-Username
             </label>
             <input
               id="username"
@@ -97,10 +83,9 @@ const Signup = () => {
 
           <button
             type="submit"
-            disabled={loading}
             className="w-full bg-orange-600 hover:bg-orange-500 transition duration-300 text-white py-2 rounded-md text-lg font-medium"
           >
-            {loading ? "Signing up..." : "Sign Up"}
+            Sign Up
           </button>
         </form>
 
@@ -115,4 +100,4 @@ const Signup = () => {
   );
 };
 
-export default Signup;
+export default Signup
