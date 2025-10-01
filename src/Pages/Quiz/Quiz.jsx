@@ -1,10 +1,9 @@
-import React, { useState, useEffect } from 'react';
-
-const API_BASE = "https://megaeth-app.onrender.com/api";
+import React, { useState, useEffect } from "react";
+import { apiFetch } from "../../api";
 
 const Quiz = () => {
-  const [userName, setUserName] = useState(localStorage.getItem("username") || "");
-  const [userId, setUserId] = useState(localStorage.getItem("userId") || null);
+  const [userName] = useState(localStorage.getItem("username") || "");
+  const [userId] = useState(localStorage.getItem("userId") || null);
   const [startQuiz, setStartQuiz] = useState(false);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [score, setScore] = useState(0);
@@ -101,17 +100,14 @@ const Quiz = () => {
     }
   ];
 
-  // Fetch attempts left on mount
-  useEffect(() => {
+useEffect(() => {
     if (userId) {
-      fetch(`${API_BASE}/quiz/attempts/${userId}`)
-        .then(res => res.json())
-        .then(data => setAttemptsLeft(data.attempts_left))
-        .catch(err => console.error("Error fetching attempts:", err));
+      apiFetch(`/quiz/attempts/${userId}`)
+        .then((data) => setAttemptsLeft(data.attempts_left))
+        .catch((err) => console.error("Error fetching attempts:", err));
     }
   }, [userId]);
 
-  // Timer effect
   useEffect(() => {
     if (startQuiz && !showResult && timeLeft > 0) {
       const timer = setTimeout(() => setTimeLeft(timeLeft - 1), 1000);
@@ -122,7 +118,7 @@ const Quiz = () => {
   }, [startQuiz, showResult, timeLeft]);
 
   const handleStart = () => {
-    if (userName.trim() !== '' && attemptsLeft > 0) {
+    if (userName && attemptsLeft > 0) {
       setStartQuiz(true);
       setTimeLeft(15);
     }
@@ -150,26 +146,17 @@ const Quiz = () => {
 
     if (userId) {
       try {
-        const res = await fetch(`${API_BASE}/quiz/submit`, {
+        const data = await apiFetch("/quiz/submit", {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ user_id: userId, score })
+          body: JSON.stringify({ user_id: userId, score }),
         });
 
-        if (res.ok) {
-          const data = await res.json();
-          setAttemptsLeft(data.attempts_left);
+        setAttemptsLeft(data.attempts_left);
 
-          // fetch leaderboard after submitting score
-          fetch(`${API_BASE}/quiz/leaderboard`)
-            .then(res => res.json())
-            .then(lb => setLeaderboard(lb));
-        } else {
-          const err = await res.json();
-          console.error("Submit error:", err.detail);
-        }
+        const lb = await apiFetch("/quiz/leaderboard");
+        setLeaderboard(lb);
       } catch (err) {
-        console.error("Error submitting score:", err);
+        console.error("Submit error:", err);
       }
     }
   };
@@ -180,42 +167,39 @@ const Quiz = () => {
         {!startQuiz ? (
           <div className="text-center space-y-4">
             <h2 className="text-3xl font-bold text-orange-500">Start Quiz</h2>
-            <input
-              type="text"
-              placeholder="Enter your name"
-              value={userName}
-              onChange={(e) => {
-                setUserName(e.target.value);
-                localStorage.setItem("username", e.target.value);
-              }}
-              className="w-full px-4 py-2 rounded-md bg-gray-800 text-white border border-gray-600 focus:outline-none focus:ring-2 focus:ring-orange-500"
-            />
             <button
               onClick={handleStart}
               disabled={attemptsLeft === 0}
               className={`w-full ${
-                attemptsLeft === 0 ? "bg-gray-600 cursor-not-allowed" : "bg-orange-600 hover:bg-orange-500"
+                attemptsLeft === 0
+                  ? "bg-gray-600 cursor-not-allowed"
+                  : "bg-orange-600 hover:bg-orange-500"
               } transition duration-300 text-white py-2 rounded-md text-lg font-medium`}
             >
               {attemptsLeft === 0 ? "No Attempts Left Today" : "Start Quiz"}
             </button>
             {attemptsLeft !== null && (
-              <p className="text-sm text-gray-400">Attempts left today: {attemptsLeft}</p>
+              <p className="text-sm text-gray-400">
+                Attempts left today: {attemptsLeft}
+              </p>
             )}
           </div>
         ) : showResult ? (
           <div className="text-center space-y-4">
             <h2 className="text-3xl font-bold text-orange-500">Quiz Finished!</h2>
             <p className="text-lg">
-              {userName}, your score is <strong>{score}</strong> out of {questions.length}
+              {userName}, your score is <strong>{score}</strong> out of{" "}
+              {questions.length}
             </p>
-            <p className="text-sm text-gray-400">
-              You have {attemptsLeft} attempts left today.
-            </p>
-            <h3 className="text-2xl font-semibold mt-6 text-orange-400">🏆 Leaderboard (Top 10)</h3>
+            <h3 className="text-2xl font-semibold mt-6 text-orange-400">
+              🏆 Leaderboard (Top 10)
+            </h3>
             <ul className="mt-4 space-y-2">
               {leaderboard.map((entry, idx) => (
-                <li key={idx} className="flex justify-between bg-gray-800 px-4 py-2 rounded-md">
+                <li
+                  key={idx}
+                  className="flex justify-between bg-gray-800 px-4 py-2 rounded-md"
+                >
                   <span>User {entry.user_id}</span>
                   <span className="font-bold">{entry.best_score}</span>
                 </li>
@@ -223,18 +207,21 @@ const Quiz = () => {
             </ul>
           </div>
         ) : (
-          <div className="space-y-4">
+          <div>
             <h2 className="text-2xl font-semibold text-orange-400">
               Question {currentIndex + 1} of {questions.length}
             </h2>
             <p className="text-lg mb-2">{questions[currentIndex].question}</p>
 
-            {/* Timer + progress bar */}
+            {/* Timer bar */}
             <div className="mb-4">
               <div className="h-2 bg-gray-700 rounded">
                 <div
                   className="h-2 bg-orange-500 rounded"
-                  style={{ width: `${(timeLeft / 15) * 100}%`, transition: "width 1s linear" }}
+                  style={{
+                    width: `${(timeLeft / 15) * 100}%`,
+                    transition: "width 1s linear",
+                  }}
                 />
               </div>
               <p className="text-sm text-gray-400 mt-1">{timeLeft} seconds left</p>
@@ -245,7 +232,7 @@ const Quiz = () => {
                 <button
                   key={index}
                   onClick={() => handleAnswer(opt)}
-                  className="w-full bg-gray-800 border border-gray-600 hover:bg-orange-600 transition duration-200 px-4 py-2 rounded-md text-left"
+                  className="w-full bg-gray-800 border border-gray-600 hover:bg-orange-600 px-4 py-2 rounded-md text-left"
                 >
                   {opt}
                 </button>
