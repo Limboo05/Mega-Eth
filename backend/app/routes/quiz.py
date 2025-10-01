@@ -1,18 +1,23 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from app.database import get_db
-from app.models.quiz import Quiz
+from app.services.quiz_service import save_score, get_leaderboard, get_attempts_left
 
 router = APIRouter()
 
-@router.get("/")
-def get_quizzes(db: Session = Depends(get_db)):
-    return db.query(Quiz).all()
+@router.post("/submit")
+def submit(user_id: int, score: int, db: Session = Depends(get_db)):
+    result, attempts_left = save_score(db, user_id, score)
+    if not result:
+        raise HTTPException(status_code=400, detail="No attempts left today")
+    return {"msg": "Score saved", "score": result.score, "attempts_left": attempts_left}
 
-@router.post("/")
-def create_quiz(question: str, answer: str, options: str, db: Session = Depends(get_db)):
-    new_quiz = Quiz(question=question, answer=answer, options=options)
-    db.add(new_quiz)
-    db.commit()
-    db.refresh(new_quiz)
-    return new_quiz
+@router.get("/leaderboard")
+def leaderboard(db: Session = Depends(get_db)):
+    leaders = get_leaderboard(db)
+    return [{"user_id": row.user_id, "best_score": row.best_score} for row in leaders]
+
+@router.get("/attempts/{user_id}")
+def attempts(user_id: int, db: Session = Depends(get_db)):
+    attempts_left = get_attempts_left(db, user_id)
+    return {"user_id": user_id, "attempts_left": attempts_left}
