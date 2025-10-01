@@ -4,10 +4,10 @@ from app.routes import auth, quiz, leaderboard
 
 app = FastAPI(title="MegaETH Backend", version="1.0.0")
 
-# ✅ Allow frontend (Vercel) to talk to backend
+# ✅ Allow frontend (Vercel + localhost) to talk to backend
 origins = [
-    "http://localhost:5173",  # Vite dev server
-    "https://mega-eth-blond.vercel.app/"  # replace with actual Vercel domain
+    "http://localhost:5173",       # Vite dev server
+    "https://mega-eth.vercel.app"  # your deployed frontend
 ]
 
 app.add_middleware(
